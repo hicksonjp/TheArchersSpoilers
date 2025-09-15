@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # The Archers Spoilers
 # ====================
 #
@@ -22,17 +24,23 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta
 import urllib.request
+import ssl
+
 from bs4 import BeautifulSoup
 
-SCHEDULE_URL = "http://www.bbc.co.uk/schedules/p00fzl7j"
+SCHEDULE_URL = "https://www.bbc.co.uk/schedules/p00fzl7j"
 
 def getSpoiler( pDate, pURL ):
 
     try:
-        with urllib.request.urlopen( pURL) as f:
+        with urllib.request.urlopen( pURL, context=ssl._create_unverified_context()) as f:
             txt_content = f.read().decode('utf-8')
+            #txt_content = f.read()
     except urllib.error.HTTPError:
         return ""
+    except UnicodeDecodeError:
+        # print( "UnicodeDecodeError with %s, %s" % (pDate, pURL ))
+        return "UnicodeDecodeError with %s, %s" % (pDate, pURL )
 
     soup = BeautifulSoup( txt_content, 'html.parser')
 
@@ -53,11 +61,13 @@ date_list = [date.today() + timedelta(days=x) for x in range(0, 30)]
 for day in date_list:
 
     dateURL = SCHEDULE_URL + "/%02d/%02d/%02d" % (day.year, day.month, day.day)
-    spoiler = getSpoiler( day, dateURL )
+    spoiler = getSpoiler( day, dateURL ).replace(u"\u2019","'")
 
-    if spoiler.startswith("Contemporary drama in a rural setting") == True:
-        break
-    elif spoiler != "":
-        print( "%s: %s" % (day.strftime("%a %d/%m/%Y"), spoiler ))
+#    if spoiler.startswith("Contemporary drama in a rural setting") == True:
+#        break
+#    elif spoiler != "":
+#        print( "%s: %s" % (day.strftime("%a %d/%m/%Y"), spoiler ))
+    print( "%s: %s" % (day.strftime("%a %d/%m/%Y"), spoiler ))
 
 input("Press a key to exit.")
+
